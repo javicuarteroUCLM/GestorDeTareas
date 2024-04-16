@@ -1,11 +1,13 @@
 import tkinter as tk
 from tkinter import messagebox
-from tkinter import ttk,simpledialog
+from tkinter import ttk,simpledialog, font
+from tkcalendar import Calendar
 import auth
 import db
 
-# Ventana de inicio de sesión
+
 def mostrar_ventana_inicio_sesion():
+    "Método para mostrar la ventana de inicio de sesión."
     ventana_inicio_sesion = tk.Tk()
     ventana_inicio_sesion.title("Inicio de Sesión")
 
@@ -28,71 +30,148 @@ def mostrar_ventana_inicio_sesion():
     tk.Button(ventana_inicio_sesion, text="Iniciar Sesión", command=intento_inicio_sesion).pack()
     ventana_inicio_sesion.mainloop()
 
-# Ventana principal
+# Función para mostrar tareas en el calendario
+def tareas_calendario(calendario, tasks):
+    for task in tasks:
+        date = task['fecha_entrega']
+        title = task['titulo']
+        # Crear evento en el calendario
+        calendario.calevent_create(date, 'Tarea', title)
+        # Configurar el color del evento
+        calendario.calevent_tag_config('Tarea', background='red', foreground='white')
+
+
 def mostrar_ventana_principal(usuario):
+    "Método para mostrar la ventana principal"
     conexion = db.conectar_a_base_de_datos()
     ventana_principal = tk.Tk()
     ventana_principal.title("Sistema de Gestión de Tareas")
 
-    tk.Label(ventana_principal, text=f"Bienvenido {usuario['nombre']} - {usuario['rol']}").pack()
+    fuente_bienvenida = font.Font(family="Helvetica", size=16, weight="bold")
 
-    # Marco para las tareas
+    label_bienvenida = tk.Label(ventana_principal, text=f"Bienvenido {usuario['nombre']} - {usuario['rol']}", font=fuente_bienvenida)
+    label_bienvenida.pack()
+
     marco_tareas = tk.Frame(ventana_principal)
     marco_tareas.pack()
+    
+    calendar_frame = tk.Frame(ventana_principal)
+    calendar_frame.pack()
 
-    # Obtener y mostrar tareas
-    def actualizar_lista_tareas():
-        marco_tareas = tk.Frame(ventana_principal)
-        marco_tareas.pack()
+    calendario = Calendar(calendar_frame, selectmode="day", date_pattern="yyyy-mm-dd", font="Arial 14", locale="es_ES", disabledforeground="red", selectforeground="white", selectbackground="blue")
+    calendario.pack()
+    
+    def mostrar_tareas_en_fecha_seleccionada():
+        fecha_seleccionada = calendario.get_date()
+        tareas_fecha_seleccionada = [tarea for tarea in db.obtener_tareas_de_usuario(conexion, usuario['id']) if tarea['fecha_entrega'] == fecha_seleccionada]
+
+        texto_tareas = '\n'.join([f"{tarea['titulo']} - Prioridad: {tarea['prioridad']}" for tarea in tareas_fecha_seleccionada])
+        messagebox.showinfo("Tareas para " + fecha_seleccionada, texto_tareas)
+
+    tk.Button(ventana_principal, text="Mostrar eventos", command=mostrar_tareas_en_fecha_seleccionada).pack()
+            
+    def actualizar_lista_tareas(marco_tareas):
+        for widget in marco_tareas.winfo_children():
+            widget.destroy()
         tareas = db.obtener_tareas_de_usuario(conexion, usuario['id'])
         for tarea in tareas:
             tk.Label(marco_tareas, text=f"{tarea['titulo']} - Fecha de entrega: {tarea['fecha_entrega']} - Prioridad: {tarea['prioridad']}").pack()
 
-    actualizar_lista_tareas()
 
-    # Función para agregar tareas
+    actualizar_lista_tareas(marco_tareas)
+
+    
     def agregar_tarea():
-        titulo = simpledialog.askstring("Agregar Tarea", "Título:")
-        descripcion = simpledialog.askstring("Agregar Tarea", "Descripción:")
-        fecha_entrega = simpledialog.askstring("Agregar Tarea", "Fecha de entrega (YYYY-MM-DD):")
-        prioridad = simpledialog.askinteger("Agregar Tarea", "Prioridad (número):")
-        if titulo and fecha_entrega and prioridad is not None:
-            db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, usuario['id'])
-            actualizar_lista_tareas()
-        else:
-            messagebox.showwarning("Advertencia", "La tarea necesita al menos un título, fecha de entrega y prioridad.")
+        ventana_agregar = tk.Toplevel(ventana_principal)
+        ventana_agregar.title("Agregar Nueva Tarea")
+
+        tk.Label(ventana_agregar, text="Título:").pack()
+        titulo_entry = tk.Entry(ventana_agregar)
+        titulo_entry.pack()
+
+        tk.Label(ventana_agregar, text="Descripción:").pack()
+        descripcion_entry = tk.Entry(ventana_agregar)
+        descripcion_entry.pack()
+
+        tk.Label(ventana_agregar, text="Fecha de entrega (YYYY-MM-DD):").pack()
+        fecha_entrega_entry = tk.Entry(ventana_agregar)
+        fecha_entrega_entry.pack()
+
+        tk.Label(ventana_agregar, text="Prioridad (número):").pack()
+        prioridad_entry = tk.Entry(ventana_agregar)
+        prioridad_entry.pack()
+
+        def confirmar_agregar():
+            titulo = titulo_entry.get()
+            descripcion = descripcion_entry.get()
+            fecha_entrega = fecha_entrega_entry.get()
+            prioridad = prioridad_entry.get()
+
+            if titulo and fecha_entrega and prioridad:
+                try:
+                    prioridad = int(prioridad)  # Asegúrate de que la prioridad es un entero
+                    db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, usuario['id'])
+                    actualizar_lista_tareas(marco_tareas)  # Asegúrate de pasar el marco_tareas correcto
+                    ventana_agregar.destroy()
+                except ValueError:
+                    messagebox.showwarning("Advertencia", "La prioridad debe ser un número.", parent=ventana_agregar)
+            else:
+                messagebox.showwarning("Advertencia", "Todos los campos son obligatorios.", parent=ventana_agregar)
+
+        tk.Button(ventana_agregar, text="Agregar", command=confirmar_agregar).pack()
 
 
-    # Botón para agregar tareas (visible para todos los usuarios)
+    #Botón para agregar tareas
     tk.Button(ventana_principal, text="Agregar Tarea", command=agregar_tarea).pack()
 
-    # Si el usuario es jefe, añade la opción de asignar tareas a otros usuarios
+    #Bucle para cuando el rol del empleado sea jefe
     if usuario['rol'] == 'jefe':
         def asignar_tarea():
-            asignar_ventana= tk.Toplevel(ventana_principal)
+            asignar_ventana = tk.Toplevel(ventana_principal)
             asignar_ventana.title("Asignar Tarea a Empleado")
 
+            # Obtenemos la lista de empleados para llenar el Combobox
+            empleados = db.obtener_usuarios(conexion) 
+            empleados_dict = {emp['nombre']: emp['id'] for emp in empleados if emp['rol'] == 'empleado'}
+
             tk.Label(asignar_ventana, text="Empleado:").pack()
-            # Suponiendo que tienes una función en db.py que puede listar todos los empleados
-            empleados = db.obtener_usuarios(conexion)  # Asegúrate de implementar esta función
-            empleados_dict = {f"{emp['nombre']} ({emp['email']})": emp['id'] for emp in empleados if emp['rol'] == 'empleado'}
             combo_empleados = ttk.Combobox(asignar_ventana, values=list(empleados_dict.keys()))
             combo_empleados.pack()
 
-            titulo = simpledialog.askstring("Título de la Tarea", "Ingrese el título de la tarea:", parent=asignar_ventana)
-            descripcion = simpledialog.askstring("Descripción de la Tarea", "Ingrese la descripción de la tarea:", parent=asignar_ventana)
-            fecha_entrega = simpledialog.askstring("Fecha de Entrega", "Ingrese la fecha de entrega (YYYY-MM-DD):", parent=asignar_ventana)
-            prioridad = simpledialog.askinteger("Prioridad", "Ingrese la prioridad de la tarea (número):", parent=asignar_ventana)
+            tk.Label(asignar_ventana, text="Título:").pack()
+            titulo_entry = tk.Entry(asignar_ventana)
+            titulo_entry.pack()
+
+            tk.Label(asignar_ventana, text="Descripción:").pack()
+            descripcion_entry = tk.Text(asignar_ventana, height=3, width=40)
+            descripcion_entry.pack()
+
+            tk.Label(asignar_ventana, text="Fecha de entrega (YYYY-MM-DD):").pack()
+            fecha_entrega_entry = tk.Entry(asignar_ventana)
+            fecha_entrega_entry.pack()
+
+            tk.Label(asignar_ventana, text="Prioridad (número):").pack()
+            prioridad_entry = tk.Entry(asignar_ventana)
+            prioridad_entry.pack()
 
             def confirmar_asignacion():
                 empleado_seleccionado = combo_empleados.get()
-                if empleado_seleccionado and titulo and fecha_entrega and prioridad is not None:
-                    empleado_id = empleados_dict[empleado_seleccionado]
-                    db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, empleado_id)
-                    messagebox.showinfo("Éxito", "Tarea asignada correctamente.", parent=asignar_ventana)
-                    asignar_ventana.destroy()
+                titulo = titulo_entry.get()
+                descripcion = descripcion_entry.get("1.0", tk.END).strip()  # Obtenemos todo el texto desde la línea 1, columna 0 hasta el final
+                fecha_entrega = fecha_entrega_entry.get()
+                prioridad = prioridad_entry.get()
+
+                if empleado_seleccionado and titulo and fecha_entrega and prioridad:
+                    try:
+                        empleado_id = empleados_dict[empleado_seleccionado]
+                        prioridad = int(prioridad)  # Convertimos la prioridad a entero
+                        db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, empleado_id)
+                        messagebox.showinfo("Éxito", "Tarea asignada correctamente.", parent=asignar_ventana)
+                        asignar_ventana.destroy()
+                    except ValueError:
+                        messagebox.showerror("Error", "La prioridad debe ser un número entero.", parent=asignar_ventana)
                 else:
-                    messagebox.showwarning("Advertencia", "Debe completar todos los campos.", parent=asignar_ventana)
+                    messagebox.showerror("Error", "Todos los campos son obligatorios.", parent=asignar_ventana)
 
             tk.Button(asignar_ventana, text="Asignar Tarea", command=confirmar_asignacion).pack()
 
