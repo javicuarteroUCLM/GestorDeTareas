@@ -82,6 +82,9 @@ def mostrar_ventana_principal(usuario):
 
     
     def agregar_tarea():
+        
+        fecha_seleccionada = calendario.get_date()
+        
         ventana_agregar = tk.Toplevel(ventana_principal)
         ventana_agregar.title("Agregar Nueva Tarea")
 
@@ -99,6 +102,7 @@ def mostrar_ventana_principal(usuario):
 
         tk.Label(ventana_agregar, text="Prioridad (número):").pack()
         prioridad_entry = tk.Entry(ventana_agregar)
+        fecha_entrega_entry.insert(0, fecha_seleccionada)
         prioridad_entry.pack()
 
         def confirmar_agregar():
@@ -109,7 +113,7 @@ def mostrar_ventana_principal(usuario):
 
             if titulo and fecha_entrega and prioridad:
                 try:
-                    prioridad = int(prioridad)  # Asegúrate de que la prioridad es un entero
+                    prioridad = int(prioridad)
                     db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, usuario['id'])
                     actualizar_lista_tareas(marco_tareas)  # Asegúrate de pasar el marco_tareas correcto
                     ventana_agregar.destroy()
@@ -164,7 +168,7 @@ def mostrar_ventana_principal(usuario):
                 if empleado_seleccionado and titulo and fecha_entrega and prioridad:
                     try:
                         empleado_id = empleados_dict[empleado_seleccionado]
-                        prioridad = int(prioridad)  # Convertimos la prioridad a entero
+                        prioridad = int(prioridad) 
                         db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, empleado_id)
                         messagebox.showinfo("Éxito", "Tarea asignada correctamente.", parent=asignar_ventana)
                         asignar_ventana.destroy()
