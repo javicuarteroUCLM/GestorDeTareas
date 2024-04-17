@@ -29,6 +29,7 @@ def crear_tablas(conexion):
         descripcion TEXT,
         fecha_entrega TEXT NOT NULL,
         prioridad INTEGER NOT NULL,
+        tipo_tarea TEXT NOT NULL,
         usuario_id INTEGER NOT NULL,
         FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
     );
@@ -68,18 +69,18 @@ def obtener_usuarios(conexion):
     
 def obtener_tareas_de_usuario(conexion, usuario_id):
     """Método para obtener todas las tareas asignadas a un usuario específico."""
-    sql = '''SELECT id, titulo, descripcion, fecha_entrega, prioridad FROM tareas WHERE usuario_id = ? ORDER BY fecha_entrega, prioridad DESC;'''
+    sql = '''SELECT id, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea FROM tareas WHERE usuario_id = ? ORDER BY fecha_entrega, prioridad DESC;'''
     cursor = conexion.cursor()
     cursor.execute(sql, (usuario_id,))
-    tareas = [{"id": row[0], "titulo": row[1], "descripcion": row[2], "fecha_entrega": row[3], "prioridad": row[4]} for row in cursor.fetchall()]
+    tareas = [{"id": row[0], "titulo": row[1], "descripcion": row[2], "fecha_entrega": row[3], "prioridad": row[4], "tipo_tarea": row[5]} for row in cursor.fetchall()]
     return tareas
 
-def insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, usuario_id):
+def insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario_id):
     """Método para insertar una nueva tarea en la base de datos."""
-    sql = '''INSERT INTO tareas (titulo, descripcion, fecha_entrega, prioridad, usuario_id)
+    sql = '''INSERT INTO tareas (titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario_id)
              VALUES (?, ?, ?, ?, ?);'''
     cursor = conexion.cursor()
-    cursor.execute(sql, (titulo, descripcion, fecha_entrega, prioridad, usuario_id))
+    cursor.execute(sql, (titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario_id))
     conexion.commit()
     return cursor.lastrowid
 
@@ -88,7 +89,7 @@ def insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, usua
 if __name__ == '__main__':
     conexion = conectar_a_base_de_datos()
     crear_tablas(conexion)
-    #aquí insertamos a lo usuarios cuando queramos
+    #insertar_usuario(conexion, 'juan', 'juan@gmail', 'juan', 'empleado')
     #insertar_usuario(conexion, 'Julián Ruiz', 'julian.ruiz@uclm.es', 'julian', 'jefe')
     usuarios = obtener_usuarios(conexion)
     for usuario in usuarios:

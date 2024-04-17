@@ -74,7 +74,8 @@ def mostrar_ventana_principal(usuario):
         for widget in marco_tareas.winfo_children():
             widget.destroy()
         tareas = db.obtener_tareas_de_usuario(conexion, usuario['id'])
-        for tarea in tareas:
+        tareas_ordenadas = sorted(tareas, key=lambda x: (x['prioridad'], x['fecha_entrega']))
+        for tarea in tareas_ordenadas:
             tk.Label(marco_tareas, text=f"{tarea['titulo']} - Fecha de entrega: {tarea['fecha_entrega']} - Prioridad: {tarea['prioridad']}").pack()
 
 
@@ -82,9 +83,6 @@ def mostrar_ventana_principal(usuario):
 
     
     def agregar_tarea():
-        
-        fecha_seleccionada = calendario.get_date()
-        
         ventana_agregar = tk.Toplevel(ventana_principal)
         ventana_agregar.title("Agregar Nueva Tarea")
 
@@ -102,19 +100,24 @@ def mostrar_ventana_principal(usuario):
 
         tk.Label(ventana_agregar, text="Prioridad (número):").pack()
         prioridad_entry = tk.Entry(ventana_agregar)
-        fecha_entrega_entry.insert(0, fecha_seleccionada)
         prioridad_entry.pack()
+
+        tk.Label(ventana_agregar, text="Tipo de tarea (trabajo, cotidiana u ocio):").pack()
+        tipo_tarea_entry = tk.Entry(ventana_agregar)
+        tipo_tarea_entry.pack()
 
         def confirmar_agregar():
             titulo = titulo_entry.get()
             descripcion = descripcion_entry.get()
             fecha_entrega = fecha_entrega_entry.get()
             prioridad = prioridad_entry.get()
+            tipo_tarea = tipo_tarea_entry.get() 
 
-            if titulo and fecha_entrega and prioridad:
+
+            if titulo and fecha_entrega and prioridad and tipo_tarea:
                 try:
-                    prioridad = int(prioridad)
-                    db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, usuario['id'])
+                    prioridad = int(prioridad)  # Asegúrate de que la prioridad es un entero
+                    db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario['id'])
                     actualizar_lista_tareas(marco_tareas)  # Asegúrate de pasar el marco_tareas correcto
                     ventana_agregar.destroy()
                 except ValueError:
@@ -158,18 +161,22 @@ def mostrar_ventana_principal(usuario):
             prioridad_entry = tk.Entry(asignar_ventana)
             prioridad_entry.pack()
 
+            tipo_tarea_entry = 'trabajo'
+            tipo_tarea_entry.pack()
+
             def confirmar_asignacion():
                 empleado_seleccionado = combo_empleados.get()
                 titulo = titulo_entry.get()
                 descripcion = descripcion_entry.get("1.0", tk.END).strip()  # Obtenemos todo el texto desde la línea 1, columna 0 hasta el final
                 fecha_entrega = fecha_entrega_entry.get()
                 prioridad = prioridad_entry.get()
+                tipo_tarea = tipo_tarea_entry.get()
 
                 if empleado_seleccionado and titulo and fecha_entrega and prioridad:
                     try:
                         empleado_id = empleados_dict[empleado_seleccionado]
-                        prioridad = int(prioridad) 
-                        db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, empleado_id)
+                        prioridad = int(prioridad)  # Convertimos la prioridad a entero
+                        db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, empleado_id)
                         messagebox.showinfo("Éxito", "Tarea asignada correctamente.", parent=asignar_ventana)
                         asignar_ventana.destroy()
                     except ValueError:

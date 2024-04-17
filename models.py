@@ -10,13 +10,14 @@ class Usuario:
         return f"Usuario(id={self.id_usuario}, nombre={self.nombre}, email={self.email}, rol={self.rol})"
 
 class Tarea:
-    def __init__(self, id_tarea, titulo, descripcion, fecha_entrega, prioridad, usuario_id):
+    def __init__(self, id_tarea, titulo, descripcion, fecha_entrega, prioridad, usuario_id, tipo_tarea):
         self.id_tarea = id_tarea
         self.titulo = titulo
         self.descripcion = descripcion
         self.fecha_entrega = fecha_entrega
         self.prioridad = prioridad
         self.usuario_id = usuario_id
+        self.tipo_tarea = tipo_tarea
 
     def __repr__(self):
-        return f"Tarea(id={self.id_tarea}, titulo={self.titulo}, fecha_entrega={self.fecha_entrega}, prioridad={self.prioridad}, usuario_id={self.usuario_id})"
+        return f"Tarea(id={self.id_tarea}, titulo={self.titulo}, fecha_entrega={self.fecha_entrega}, prioridad={self.prioridad}, tipo_tarea={self.tipo_tarea}, usuario_id={self.usuario_id})"
