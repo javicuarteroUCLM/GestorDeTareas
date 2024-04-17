@@ -35,9 +35,7 @@ def tareas_calendario(calendario, tasks):
     for task in tasks:
         date = task['fecha_entrega']
         title = task['titulo']
-        # Crear evento en el calendario
         calendario.calevent_create(date, 'Tarea', title)
-        # Configurar el color del evento
         calendario.calevent_tag_config('Tarea', background='red', foreground='white')
 
 
@@ -149,9 +147,9 @@ def mostrar_ventana_principal(usuario):
 
             if titulo and fecha_entrega and prioridad and tipo_tarea:
                 try:
-                    prioridad = int(prioridad)  # Asegúrate de que la prioridad es un entero
+                    prioridad = int(prioridad) 
                     db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario['id'])
-                    actualizar_lista_tareas(marco_tareas,usuario['id'])  # Asegúrate de pasar el marco_tareas correcto
+                    actualizar_lista_tareas(marco_tareas,usuario['id'])
                     ventana_agregar.destroy()
                 except ValueError:
                     messagebox.showwarning("Advertencia", "La prioridad debe ser un número.", parent=ventana_agregar)
@@ -170,7 +168,7 @@ def mostrar_ventana_principal(usuario):
             asignar_ventana = tk.Toplevel(ventana_principal)
             asignar_ventana.title("Asignar Tarea a Empleado")
 
-            # Obtenemos la lista de empleados para llenar el Combobox
+            # Obtenemos la lista de empleados
             empleados = db.obtener_usuarios(conexion) 
             empleados_dict = {emp['nombre']: emp['id'] for emp in empleados if emp['rol'] == 'empleado'}
 
@@ -196,8 +194,8 @@ def mostrar_ventana_principal(usuario):
             
             tk.Label(asignar_ventana, text="Tipo de tarea (trabajo, cotidiana u ocio):").pack()
             tipo_tarea_entry = tk.Entry(asignar_ventana)
-            tipo_tarea_entry.insert(0, "TRABAJO")  # Establece TRABAJO como valor por defecto
-            tipo_tarea_entry.config(state='readonly')  # Hace el campo de entrada solo lectura
+            tipo_tarea_entry.insert(0, "TRABAJO")  # Establecemos TRABAJO como valor por defecto
+            tipo_tarea_entry.config(state='readonly') 
             tipo_tarea_entry.pack()
 
             def confirmar_asignacion():
@@ -211,7 +209,7 @@ def mostrar_ventana_principal(usuario):
                 if empleado_seleccionado and titulo and fecha_entrega and prioridad:
                     try:
                         empleado_id = empleados_dict[empleado_seleccionado]
-                        prioridad = int(prioridad)  # Convertimos la prioridad a entero
+                        prioridad = int(prioridad) 
                         db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, empleado_id)
                         messagebox.showinfo("Éxito", "Tarea asignada correctamente.", parent=asignar_ventana)
                         asignar_ventana.destroy()
