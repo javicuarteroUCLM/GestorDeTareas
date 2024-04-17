@@ -78,7 +78,7 @@ def obtener_tareas_de_usuario(conexion, usuario_id):
 def insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario_id):
     """Método para insertar una nueva tarea en la base de datos."""
     sql = '''INSERT INTO tareas (titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario_id)
-             VALUES (?, ?, ?, ?, ?);'''
+             VALUES (?, ?, ?, ?, ?, ?);'''
     cursor = conexion.cursor()
     cursor.execute(sql, (titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario_id))
     conexion.commit()

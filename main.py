@@ -49,17 +49,29 @@ def mostrar_ventana_principal(usuario):
 
     fuente_bienvenida = font.Font(family="Helvetica", size=16, weight="bold")
 
-    label_bienvenida = tk.Label(ventana_principal, text=f"Bienvenido {usuario['nombre']} - {usuario['rol']}", font=fuente_bienvenida)
+    label_bienvenida = tk.Label(ventana_principal, text=f"¡Bienvenido {usuario['nombre']} - {usuario['rol']}!", font=fuente_bienvenida)
     label_bienvenida.pack()
-
-    marco_tareas = tk.Frame(ventana_principal)
-    marco_tareas.pack()
+    
+    def cerrar_sesion():
+        if messagebox.askyesno("Cerrar sesión", "¿Estás seguro de que quieres cerrar sesión?"):
+            ventana_principal.destroy()
+            mostrar_ventana_inicio_sesion()
+            
+    #Botón para cerrar sesión
+    boton_cerrar_sesion = tk.Button(ventana_principal, text="Cerrar sesión", bg="red", fg="white", command=cerrar_sesion)
+    boton_cerrar_sesion.pack(anchor='ne', padx=10, pady=5)  
     
     calendar_frame = tk.Frame(ventana_principal)
     calendar_frame.pack()
 
     calendario = Calendar(calendar_frame, selectmode="day", date_pattern="yyyy-mm-dd", font="Arial 14", locale="es_ES", disabledforeground="red", selectforeground="white", selectbackground="blue")
     calendario.pack()
+
+    
+    marco_tareas = tk.Frame(ventana_principal)
+    marco_tareas.pack(fill='both', expand=True)
+    
+    fuente_titulos_tareas = font.Font(family="Helvetica", size=12, weight="bold")
     
     def mostrar_tareas_en_fecha_seleccionada():
         fecha_seleccionada = calendario.get_date()
@@ -70,19 +82,39 @@ def mostrar_ventana_principal(usuario):
 
     tk.Button(ventana_principal, text="Mostrar eventos", command=mostrar_tareas_en_fecha_seleccionada).pack()
             
-    def actualizar_lista_tareas(marco_tareas):
+    def actualizar_lista_tareas(marco_tareas, usuario_id):
+        # Primero limpiamos los marcos de tareas existentes
         for widget in marco_tareas.winfo_children():
             widget.destroy()
-        tareas = db.obtener_tareas_de_usuario(conexion, usuario['id'])
-        tareas_ordenadas = sorted(tareas, key=lambda x: (x['prioridad'], x['fecha_entrega']))
-        for tarea in tareas_ordenadas:
-            tk.Label(marco_tareas, text=f"{tarea['titulo']} - Fecha de entrega: {tarea['fecha_entrega']} - Prioridad: {tarea['prioridad']}").pack()
+
+        # Obtenemos todas las tareas del usuario
+        tareas = db.obtener_tareas_de_usuario(conexion, usuario_id)
+
+        marco_trabajo = tk.LabelFrame(marco_tareas, text='TRABAJO', labelanchor='n', font=fuente_titulos_tareas)
+        marco_trabajo.pack(side='left', fill='both', expand=True,padx=5)
+        marco_ocio = tk.LabelFrame(marco_tareas, text='OCIO', labelanchor='n', font=fuente_titulos_tareas)
+        marco_ocio.pack(side='left', fill='both', expand=True,padx=5)
+        marco_cotidiana = tk.LabelFrame(marco_tareas, text='COTIDIANA', labelanchor='n',font=fuente_titulos_tareas)
+        marco_cotidiana.pack(side='left', fill='both', expand=True,padx=5)
+
+        # Función para añadir tareas al marco correspondiente
+        def agregar_tareas_a_marco(marco, tareas):
+            for tarea in tareas:
+                tk.Label(marco, text=f"{tarea['titulo']} - Fecha de entrega: {tarea['fecha_entrega']} - Prioridad: {tarea['prioridad']}").pack()
+
+        # Filtramos las tareas por tipo y las agregamos a sus respectivos marcos
+        agregar_tareas_a_marco(marco_trabajo, [tarea for tarea in tareas if tarea['tipo_tarea'] == 'TRABAJO'])
+        agregar_tareas_a_marco(marco_ocio, [tarea for tarea in tareas if tarea['tipo_tarea'] == 'OCIO'])
+        agregar_tareas_a_marco(marco_cotidiana, [tarea for tarea in tareas if tarea['tipo_tarea'] == 'COTIDIANA'])
 
 
-    actualizar_lista_tareas(marco_tareas)
+    actualizar_lista_tareas(marco_tareas,usuario['id'])
 
     
     def agregar_tarea():
+        
+        fecha_seleccionada = calendario.get_date()
+        
         ventana_agregar = tk.Toplevel(ventana_principal)
         ventana_agregar.title("Agregar Nueva Tarea")
 
@@ -100,6 +132,7 @@ def mostrar_ventana_principal(usuario):
 
         tk.Label(ventana_agregar, text="Prioridad (número):").pack()
         prioridad_entry = tk.Entry(ventana_agregar)
+        fecha_entrega_entry.insert(0, fecha_seleccionada)
         prioridad_entry.pack()
 
         tk.Label(ventana_agregar, text="Tipo de tarea (trabajo, cotidiana u ocio):").pack()
@@ -118,7 +151,7 @@ def mostrar_ventana_principal(usuario):
                 try:
                     prioridad = int(prioridad)  # Asegúrate de que la prioridad es un entero
                     db.insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, usuario['id'])
-                    actualizar_lista_tareas(marco_tareas)  # Asegúrate de pasar el marco_tareas correcto
+                    actualizar_lista_tareas(marco_tareas,usuario['id'])  # Asegúrate de pasar el marco_tareas correcto
                     ventana_agregar.destroy()
                 except ValueError:
                     messagebox.showwarning("Advertencia", "La prioridad debe ser un número.", parent=ventana_agregar)
@@ -160,8 +193,11 @@ def mostrar_ventana_principal(usuario):
             tk.Label(asignar_ventana, text="Prioridad (número):").pack()
             prioridad_entry = tk.Entry(asignar_ventana)
             prioridad_entry.pack()
-
-            tipo_tarea_entry = 'trabajo'
+            
+            tk.Label(asignar_ventana, text="Tipo de tarea (trabajo, cotidiana u ocio):").pack()
+            tipo_tarea_entry = tk.Entry(asignar_ventana)
+            tipo_tarea_entry.insert(0, "TRABAJO")  # Establece TRABAJO como valor por defecto
+            tipo_tarea_entry.config(state='readonly')  # Hace el campo de entrada solo lectura
             tipo_tarea_entry.pack()
 
             def confirmar_asignacion():
