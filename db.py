@@ -44,9 +44,9 @@ def crear_tablas(conexion):
 
 def insertar_usuario(conexion, nombre, email, password, rol):
     """Método para insertar un nuevo usuario en la base de datos."""
-    sql = '''INSERT INTO usuarios (nombre, email, password, rol)
-             VALUES (?, ?, ?, ?);'''
+    sql = '''INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?);'''
     try:
+        "Bucle para insertar usuarios en la base de datos."
         cursor = conexion.cursor()
         cursor.execute(sql, (nombre, email, password, rol))
         conexion.commit()
@@ -84,6 +84,35 @@ def insertar_tarea(conexion, titulo, descripcion, fecha_entrega, prioridad, tipo
     conexion.commit()
     return cursor.lastrowid
 
+def eliminar_tarea(conexion, tarea_id):
+    """Eliminar una tarea por su ID."""
+    sql = '''DELETE FROM tareas WHERE id = ?;'''
+    cursor = conexion.cursor()
+    cursor.execute(sql, (tarea_id,))
+    conexion.commit()
+
+def marcar_tarea_como_hecha(conexion, tarea_id):
+    """Marcar una tarea como hecha (en este caso la eliminamos) por su ID. Es igual que eliminar_tarea."""
+    eliminar_tarea(conexion, tarea_id)
+    
+def obtener_tarea_por_id(conexion, tarea_id):
+    """Obtener una tarea por su ID."""
+    sql = '''SELECT id, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea FROM tareas WHERE id = ?;'''
+    cursor = conexion.cursor()
+    cursor.execute(sql, (tarea_id,))
+    tarea = cursor.fetchone()
+    return {"id": tarea[0], "titulo": tarea[1], "descripcion": tarea[2],
+            "fecha_entrega": tarea[3], "prioridad": tarea[4], "tipo_tarea": tarea[5]}
+
+def actualizar_tarea(conexion, tarea_id, titulo, descripcion, fecha_entrega, prioridad, tipo_tarea):
+    """Actualizar una tarea existente en la base de datos."""
+    sql = '''UPDATE tareas SET titulo = ?, descripcion = ?, fecha_entrega = ?, prioridad = ?, tipo_tarea = ? WHERE id = ?;'''
+    cursor = conexion.cursor()
+    cursor.execute(sql, (titulo, descripcion, fecha_entrega, prioridad, tipo_tarea, tarea_id))
+    conexion.commit()
+
+
+
 
 
 if __name__ == '__main__':
@@ -91,6 +120,8 @@ if __name__ == '__main__':
     crear_tablas(conexion)
     #insertar_usuario(conexion, 'juan', 'juan@gmail', 'juan', 'empleado')
     #insertar_usuario(conexion, 'Julián Ruiz', 'julian.ruiz@uclm.es', 'julian', 'jefe')
+    insertar_usuario(conexion, 'Javier Cuartero', 'javier@gmail.com', 'javier', 'empleado')
+    insertar_usuario(conexion, 'Juande de Dios Carrera', 'juande@gmail.com', 'juande', 'empleado')
     usuarios = obtener_usuarios(conexion)
     for usuario in usuarios:
         print(usuario)
