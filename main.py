@@ -32,14 +32,6 @@ def mostrar_ventana_inicio_sesion():
 
     tk.Button(ventana_inicio_sesion, text="Iniciar Sesión", command=intento_inicio_sesion).pack()
     ventana_inicio_sesion.mainloop()
-
-
-"""def tareas_calendario(calendario, tasks):
-    for task in tasks:
-        date = task['fecha_entrega']
-        title = task['titulo']
-        calendario.calevent_create(date, 'Tarea', title)
-        calendario.calevent_tag_config('Tarea', background='red', foreground='white') """ 
         
 def marcar_dias_con_tareas(calendario, tareas):
     "Método para marcar en azul clarito los días en los que hay tareas en el calendario."
@@ -110,6 +102,8 @@ def mostrar_ventana_principal(usuario):
             widget.destroy()
 
         tareas = db.obtener_tareas_de_usuario(conexion, usuario_id)
+        tareas = sorted(tareas, key=lambda x: (x['prioridad'], x['fecha_entrega']))
+
         marcar_dias_con_tareas(calendario, tareas)
 
         marco_trabajo = tk.LabelFrame(marco_tareas, text='TRABAJO', labelanchor='n', font=fuente_titulos_tareas)
@@ -226,9 +220,9 @@ def mostrar_ventana_principal(usuario):
         fecha_entrega_entry.insert(0, fecha_seleccionada)
         prioridad_entry.pack()
 
-        tk.Label(ventana_agregar, text="Tipo de tarea (trabajo, cotidiana u ocio):").pack()
-        tipo_tarea_entry = tk.Entry(ventana_agregar)
-        tipo_tarea_entry.pack()
+        tk.Label(ventana_agregar, text="Tipo de tarea:").pack()
+        tipo_tarea_combobox = ttk.Combobox(ventana_agregar, values=["TRABAJO", "COTIDIANA", "OCIO"])
+        tipo_tarea_combobox.pack()
 
         def confirmar_agregar():
             "Confirma la escritura de los datos de la nueva tarea."
@@ -236,7 +230,7 @@ def mostrar_ventana_principal(usuario):
             descripcion = descripcion_entry.get()
             fecha_entrega = fecha_entrega_entry.get()
             prioridad = prioridad_entry.get()
-            tipo_tarea = tipo_tarea_entry.get() 
+            tipo_tarea = tipo_tarea_combobox.get() 
 
 
             if titulo and fecha_entrega and prioridad and tipo_tarea:

@@ -120,8 +120,8 @@ if __name__ == '__main__':
     crear_tablas(conexion)
     #insertar_usuario(conexion, 'juan', 'juan@gmail', 'juan', 'empleado')
     #insertar_usuario(conexion, 'Julián Ruiz', 'julian.ruiz@uclm.es', 'julian', 'jefe')
-    insertar_usuario(conexion, 'Javier Cuartero', 'javier@gmail.com', 'javier', 'empleado')
-    insertar_usuario(conexion, 'Juande de Dios Carrera', 'juande@gmail.com', 'juande', 'empleado')
+    #insertar_usuario(conexion, 'Javier Cuartero', 'javier@gmail.com', 'javier', 'empleado')
+    #insertar_usuario(conexion, 'Juande de Dios Carrera', 'juande@gmail.com', 'juande', 'empleado')
     usuarios = obtener_usuarios(conexion)
     for usuario in usuarios:
         print(usuario)
