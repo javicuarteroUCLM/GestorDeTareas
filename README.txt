@@ -6,6 +6,6 @@ Se trata de una aplicación de escritorio desarrollada 100% con Python, tanto co
 
 La aplicación también cuenta con dos tipos de rol: Jefe, Empleado.
   -Un empleado solo puede gestionar (añadir, editar, eliminar) sus tareas.
-  -Un jefe puede gestionar sus tareas, y además la de los empleados, es decir, puede añadir, editar o eliminar las tareas de otros usuarios.
+  -Un jefe puede gestionar sus tareas, y además las de los empleados, es decir, puede añadir, editar o eliminar las tareas de otros usuarios.
 
 
